@@ -12,11 +12,62 @@ const HOST = process.env.HOST || '0.0.0.0';
 const ADMIN_PASSWORD = 'admin';
 
 const ROOT_DIR = __dirname;
+const defaultStorageBaseDir = process.env.LOCALAPPDATA
+  ? path.join(process.env.LOCALAPPDATA, 'livro-de-historias')
+  : path.join(os.homedir(), '.livro-de-historias');
 const fallbackBaseDir = path.join(os.tmpdir(), 'livro-de-historias');
-const storageBaseDir = process.env.STORAGE_DIR || ROOT_DIR;
+const storageBaseDir = process.env.STORAGE_DIR || defaultStorageBaseDir;
 const DATA_DIR = path.join(storageBaseDir, 'data');
 const UPLOAD_DIR = path.join(storageBaseDir, 'uploads');
 const STORIES_FILE = path.join(DATA_DIR, 'stories.json');
+
+function readStoriesFileSync(filePath) {
+  try {
+    const content = fssync.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(content);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_err) {
+    return [];
+  }
+}
+
+function migrateLegacyStorage(targetStorage) {
+  const legacyStoriesFile = path.join(ROOT_DIR, 'data', 'stories.json');
+  const legacyUploadsDir = path.join(ROOT_DIR, 'uploads');
+
+  if (!fssync.existsSync(legacyStoriesFile)) {
+    return;
+  }
+
+  const currentStories = readStoriesFileSync(targetStorage.storiesFile);
+  if (currentStories.length > 0) {
+    return;
+  }
+
+  const legacyStories = readStoriesFileSync(legacyStoriesFile);
+  if (legacyStories.length === 0) {
+    return;
+  }
+
+  fssync.writeFileSync(targetStorage.storiesFile, JSON.stringify(legacyStories, null, 2), 'utf8');
+
+  if (!fssync.existsSync(legacyUploadsDir)) {
+    return;
+  }
+
+  const uploadFiles = fssync.readdirSync(legacyUploadsDir, { withFileTypes: true });
+  uploadFiles.forEach((entry) => {
+    if (!entry.isFile()) {
+      return;
+    }
+
+    const sourcePath = path.join(legacyUploadsDir, entry.name);
+    const targetPath = path.join(targetStorage.uploadDir, entry.name);
+    if (!fssync.existsSync(targetPath)) {
+      fssync.copyFileSync(sourcePath, targetPath);
+    }
+  });
+}
 
 function ensureStorage(baseDir) {
   const dataDir = path.join(baseDir, 'data');
@@ -41,6 +92,11 @@ function ensureStorage(baseDir) {
 let activeStorage = { dataDir: DATA_DIR, uploadDir: UPLOAD_DIR, storiesFile: STORIES_FILE };
 try {
   activeStorage = ensureStorage(storageBaseDir);
+
+  // Migra dados de versoes antigas que salvavam dentro do repositorio.
+  if (path.resolve(storageBaseDir) !== path.resolve(ROOT_DIR)) {
+    migrateLegacyStorage(activeStorage);
+  }
 } catch (_err) {
   // Em hosts gerenciados com pasta de app read-only, usa temp dir.
   activeStorage = ensureStorage(fallbackBaseDir);
