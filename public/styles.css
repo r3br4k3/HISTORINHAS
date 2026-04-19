@@ -383,6 +383,21 @@ body.dark-mode .story-card {
   border: 1px solid #c9ac84;
 }
 
+.reader-gallery-item {
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+
+.reader-gallery-item:hover {
+  transform: scale(1.03);
+}
+
+.empty-gallery {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+
 .reader-modal {
   width: min(760px, 94vw);
   border: none;
@@ -475,6 +490,10 @@ body.dark-mode .reader-open-book {
   line-height: 0.95;
 }
 
+.reader-page-left .story-gallery {
+  margin-top: 12px;
+}
+
 .reader-page-right {
   background-color: rgba(255, 250, 239, 0.72);
 }
@@ -525,6 +544,99 @@ body.dark-mode .edit-form {
 .edit-form h4 {
   margin: 0 0 10px;
   font-size: 1.35rem;
+}
+
+.edit-photos-note {
+  margin: -4px 0 8px;
+  color: var(--ink-soft);
+}
+
+.edit-current-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.edit-photo-item {
+  margin: 0;
+  border: 1px dashed #ba9568;
+  border-radius: 10px;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+  background: rgba(255, 248, 234, 0.65);
+  cursor: pointer;
+}
+
+body.dark-mode .edit-photo-item {
+  background: rgba(48, 38, 30, 0.7);
+  border-color: #8f7658;
+}
+
+.edit-photo-item input {
+  margin: 0;
+  width: auto;
+  justify-self: start;
+}
+
+.edit-photo-item img {
+  width: 100%;
+  height: 82px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #c9ac84;
+}
+
+.edit-photo-item span {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.image-viewer {
+  width: min(980px, 96vw);
+  border: none;
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(22, 18, 14, 0.95);
+  color: #f7ead1;
+}
+
+.image-viewer::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.image-viewer-content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.image-viewer img {
+  width: 100%;
+  max-height: 74vh;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 223, 176, 0.5);
+}
+
+.image-nav {
+  width: auto;
+  margin: 0;
+  min-width: 52px;
+  min-height: 52px;
+  border-radius: 999px;
+  background: rgba(255, 228, 186, 0.22);
+  border: 1px solid rgba(255, 228, 186, 0.7);
+  color: #fff3de;
+  font-size: 1.25rem;
+}
+
+.viewer-counter {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 1rem;
 }
 
 .hidden {
@@ -588,5 +700,13 @@ body.dark-mode .edit-form {
   .reader-page-left {
     border-right: none;
     border-bottom: 1px solid rgba(87, 57, 25, 0.2);
+  }
+
+  .image-viewer-content {
+    grid-template-columns: 1fr;
+  }
+
+  .image-nav {
+    width: 100%;
   }
 }

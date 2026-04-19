@@ -90,11 +90,11 @@
           <h4>Capitulo</h4>
           <p id="modalTitle"></p>
           <p id="modalMeta" class="story-meta"></p>
+          <div id="modalGallery" class="story-gallery"></div>
         </aside>
 
         <article class="reader-page reader-page-right">
           <p id="modalContent" class="modal-content"></p>
-          <div id="modalGallery" class="story-gallery"></div>
         </article>
       </section>
 
@@ -114,6 +114,10 @@
         <label for="editContent">Historia</label>
         <textarea id="editContent" name="content" rows="8" maxlength="5000" required></textarea>
 
+        <label>Imagens atuais (admin)</label>
+        <p class="edit-photos-note">Marque as imagens que deseja remover.</p>
+        <div id="editCurrentPhotos" class="edit-current-photos"></div>
+
         <label for="editPhotos">Novas fotos (opcional)</label>
         <input id="editPhotos" name="photos" type="file" accept="image/*" multiple class="file-hidden">
         <label for="editPhotos" class="photo-picker">
@@ -127,6 +131,16 @@
         </div>
       </form>
     </article>
+  </dialog>
+
+  <dialog id="imageViewer" class="image-viewer">
+    <button id="closeImageViewerBtn" type="button" class="close-modal" aria-label="Fechar imagem">Fechar</button>
+    <div class="image-viewer-content">
+      <button id="prevImageBtn" type="button" class="image-nav" aria-label="Imagem anterior">&#8592;</button>
+      <img id="viewerImage" alt="Imagem da historia" />
+      <button id="nextImageBtn" type="button" class="image-nav" aria-label="Proxima imagem">&#8594;</button>
+    </div>
+    <p id="viewerCounter" class="viewer-counter"></p>
   </dialog>
 
   <script src="app.js"></script>

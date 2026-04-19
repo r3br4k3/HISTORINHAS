@@ -136,6 +136,18 @@ function requireAdmin(req, res) {
   return true;
 }
 
+function parseRemovePhotosField(removePhotosField) {
+  if (Array.isArray(removePhotosField)) {
+    return removePhotosField.filter(Boolean);
+  }
+
+  if (typeof removePhotosField === 'string' && removePhotosField.trim()) {
+    return [removePhotosField.trim()];
+  }
+
+  return [];
+}
+
 async function deletePhotoFiles(photos = []) {
   const removals = photos.map(async (photoPath) => {
     const fileName = path.basename(photoPath || '');
@@ -244,11 +256,16 @@ app.put('/api/stories/:id', upload.array('photos', 6), async (req, res) => {
     }
 
     const currentStory = stories[storyIndex];
+    const currentPhotos = Array.isArray(currentStory.photos) ? currentStory.photos : [];
+    const removePhotos = parseRemovePhotosField(req.body.removePhotos);
+    const removeSet = new Set(removePhotos);
+    const keptPhotos = currentPhotos.filter((photoPath) => !removeSet.has(photoPath));
     const newPhotos = (req.files || []).map((file) => `/uploads/${file.filename}`);
-    const nextPhotos = newPhotos.length > 0 ? newPhotos : (currentStory.photos || []);
+    const nextPhotos = [...keptPhotos, ...newPhotos].slice(0, 6);
 
-    if (newPhotos.length > 0) {
-      await deletePhotoFiles(currentStory.photos || []);
+    if (removePhotos.length > 0) {
+      const existingToRemove = currentPhotos.filter((photoPath) => removeSet.has(photoPath));
+      await deletePhotoFiles(existingToRemove);
     }
 
     const updatedStory = {

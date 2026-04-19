@@ -24,9 +24,17 @@ const editForm = document.getElementById('editForm');
 const editTitle = document.getElementById('editTitle');
 const editAuthor = document.getElementById('editAuthor');
 const editContent = document.getElementById('editContent');
+const editCurrentPhotos = document.getElementById('editCurrentPhotos');
 const editPhotos = document.getElementById('editPhotos');
 const editPhotosInfo = document.getElementById('editPhotosInfo');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+const imageViewer = document.getElementById('imageViewer');
+const closeImageViewerBtn = document.getElementById('closeImageViewerBtn');
+const prevImageBtn = document.getElementById('prevImageBtn');
+const nextImageBtn = document.getElementById('nextImageBtn');
+const viewerImage = document.getElementById('viewerImage');
+const viewerCounter = document.getElementById('viewerCounter');
 
 let storiesState = [];
 let selectedStoryId = null;
@@ -36,6 +44,8 @@ let readerFontScale = 1;
 const MIN_FONT_SCALE = 0.85;
 const MAX_FONT_SCALE = 1.6;
 const FONT_STEP = 0.1;
+let viewerPhotos = [];
+let viewerIndex = 0;
 
 function formatDate(iso) {
   try {
@@ -217,8 +227,80 @@ function fillModal(story) {
       img.src = photoPath;
       img.alt = `Foto ${index + 1} da historia ${story.title}`;
       img.loading = 'lazy';
+      img.classList.add('reader-gallery-item');
+      img.addEventListener('click', () => {
+        openImageViewer(story.photos, index, story.title);
+      });
       modalGallery.appendChild(img);
     });
+  } else {
+    modalGallery.innerHTML = '<p class="empty-gallery">Sem imagens nesta historia.</p>';
+  }
+}
+
+function renderEditCurrentPhotos(story) {
+  editCurrentPhotos.innerHTML = '';
+  const photos = Array.isArray(story.photos) ? story.photos : [];
+
+  if (!photos.length) {
+    editCurrentPhotos.innerHTML = '<p class="empty-gallery">Sem imagens atuais.</p>';
+    return;
+  }
+
+  photos.forEach((photoPath, index) => {
+    const label = document.createElement('label');
+    label.className = 'edit-photo-item';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.name = 'removePhotos';
+    checkbox.value = photoPath;
+
+    const img = document.createElement('img');
+    img.src = photoPath;
+    img.alt = `Imagem atual ${index + 1}`;
+
+    const span = document.createElement('span');
+    span.textContent = 'Remover';
+
+    label.appendChild(checkbox);
+    label.appendChild(img);
+    label.appendChild(span);
+    editCurrentPhotos.appendChild(label);
+  });
+}
+
+function updateViewer() {
+  if (!viewerPhotos.length) {
+    return;
+  }
+
+  viewerImage.src = viewerPhotos[viewerIndex].src;
+  viewerImage.alt = viewerPhotos[viewerIndex].alt;
+  viewerCounter.textContent = `${viewerIndex + 1} / ${viewerPhotos.length}`;
+}
+
+function openImageViewer(photos, initialIndex, storyTitle) {
+  viewerPhotos = photos.map((src, idx) => ({
+    src,
+    alt: `Imagem ${idx + 1} da historia ${storyTitle}`
+  }));
+  viewerIndex = initialIndex;
+  updateViewer();
+  imageViewer.showModal();
+}
+
+function changeViewerImage(direction) {
+  if (!viewerPhotos.length) {
+    return;
+  }
+  viewerIndex = (viewerIndex + direction + viewerPhotos.length) % viewerPhotos.length;
+  updateViewer();
+}
+
+function closeImageViewer() {
+  if (imageViewer.open) {
+    imageViewer.close();
   }
 }
 
@@ -262,6 +344,7 @@ function openEditForm(storyId) {
   editTitle.value = story.title;
   editAuthor.value = story.author;
   editContent.value = story.content;
+  renderEditCurrentPhotos(story);
   editForm.classList.remove('hidden');
 
   if (!readerModal.open) {
@@ -407,6 +490,20 @@ readerModal.addEventListener('click', (event) => {
 
 cancelEditBtn.addEventListener('click', () => {
   editForm.classList.add('hidden');
+});
+
+closeImageViewerBtn.addEventListener('click', closeImageViewer);
+prevImageBtn.addEventListener('click', () => {
+  changeViewerImage(-1);
+});
+nextImageBtn.addEventListener('click', () => {
+  changeViewerImage(1);
+});
+imageViewer.addEventListener('cancel', closeImageViewer);
+imageViewer.addEventListener('click', (event) => {
+  if (event.target === imageViewer) {
+    closeImageViewer();
+  }
 });
 
 refreshBtn.addEventListener('click', () => {
