@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#13223f"/>
+      <stop offset="55%" stop-color="#274b73"/>
+      <stop offset="100%" stop-color="#2f6a82"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff4cb"/>
+      <stop offset="100%" stop-color="#f2d79b"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bg)"/>
+  <circle cx="138" cy="52" r="22" fill="url(#moon)"/>
+  <circle cx="146" cy="47" r="22" fill="#274b73"/>
+  <path d="M36 132c0-12 10-22 22-22h76c12 0 22 10 22 22v18H36z" fill="#fff2d6"/>
+  <path d="M36 132h120" stroke="#d8bf97" stroke-width="3"/>
+  <path d="M96 110v40" stroke="#d8bf97" stroke-width="3"/>
+  <circle cx="48" cy="36" r="2.5" fill="#ffffff"/>
+  <circle cx="70" cy="60" r="2" fill="#ffffff"/>
+  <circle cx="114" cy="26" r="2" fill="#ffffff"/>
+  <circle cx="164" cy="84" r="2.5" fill="#ffffff"/>
+</svg>

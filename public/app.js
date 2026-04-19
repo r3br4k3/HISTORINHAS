@@ -7,6 +7,7 @@ const photosInput = document.getElementById('photos');
 const photosInfo = document.getElementById('photosInfo');
 const themeToggle = document.getElementById('themeToggle');
 const adminAccessBtn = document.getElementById('adminAccessBtn');
+const installAppBtn = document.getElementById('installAppBtn');
 
 const readerModal = document.getElementById('readerModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
@@ -46,6 +47,52 @@ const MAX_FONT_SCALE = 1.6;
 const FONT_STEP = 0.1;
 let viewerPhotos = [];
 let viewerIndex = 0;
+let deferredInstallPrompt = null;
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+
+  window.addEventListener('load', async () => {
+    try {
+      await navigator.serviceWorker.register('/sw.js');
+    } catch (_error) {
+      // Ignora erro para nao interferir no uso normal do site.
+    }
+  });
+}
+
+function setupPwaInstallPrompt() {
+  if (!installAppBtn) {
+    return;
+  }
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    installAppBtn.hidden = false;
+  });
+
+  installAppBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) {
+      return;
+    }
+
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      installAppBtn.hidden = true;
+      setMessage('Aplicativo instalado com sucesso.', 'success');
+    }
+    deferredInstallPrompt = null;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installAppBtn.hidden = true;
+    deferredInstallPrompt = null;
+  });
+}
 
 function formatDate(iso) {
   try {
@@ -548,6 +595,8 @@ increaseFontBtn.addEventListener('click', () => {
   changeReaderFont(FONT_STEP);
 });
 
+registerServiceWorker();
+setupPwaInstallPrompt();
 initTheme();
 initReaderFontScale();
 updateAdminButtonLabel();
