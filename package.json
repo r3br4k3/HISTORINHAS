@@ -1,0 +1,22 @@
+{
+  "name": "livro-de-historias",
+  "version": "1.0.0",
+  "description": "Sistema colaborativo de historinhas para dormir",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "historias",
+    "livro",
+    "bedtime",
+    "colaborativo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.0.2"
+  }
+}

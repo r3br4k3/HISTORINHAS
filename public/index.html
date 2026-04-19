@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livro de Historinhas para Dormir</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;700&family=Handlee&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="sky"></div>
+  <main class="book-wrapper">
+    <header class="book-cover">
+      <p class="cover-subtitle">Biblioteca colaborativa noturna</p>
+      <h1>Livro de Historinhas para Dormir</h1>
+      <p>
+        Qualquer pessoa pode escrever um conto, adicionar fotos e deixar o sono mais doce para outras familias.
+      </p>
+      <div class="top-controls">
+        <button id="themeToggle" type="button" class="secondary-btn">Ativar modo escuro</button>
+        <button id="adminAccessBtn" type="button" class="secondary-btn">Entrar admin</button>
+      </div>
+    </header>
+
+    <section class="book-spread" aria-label="Criar nova historinha">
+      <article class="page page-left">
+        <h2>Nova Historia</h2>
+        <form id="storyForm" enctype="multipart/form-data">
+          <label for="title">Titulo</label>
+          <input id="title" name="title" type="text" maxlength="100" placeholder="Ex.: A Estrela Que Nao Piscava" required>
+
+          <label for="author">Seu nome (opcional)</label>
+          <input id="author" name="author" type="text" maxlength="60" placeholder="Ex.: Vovo Ana">
+
+          <label for="content">Escreva a historia</label>
+          <textarea id="content" name="content" rows="10" maxlength="5000" placeholder="Era uma vez..." required></textarea>
+
+          <label for="photos">Fotos da historia (ate 6)</label>
+          <input id="photos" name="photos" type="file" accept="image/*" multiple class="file-hidden">
+          <label for="photos" class="photo-picker">
+            <span class="photo-picker-title">Escolher imagens da historinha</span>
+            <span id="photosInfo" class="photo-picker-subtitle">Nenhuma foto selecionada</span>
+          </label>
+
+          <button type="submit">Publicar nas paginas do livro</button>
+        </form>
+        <p id="formMessage" role="status" aria-live="polite"></p>
+      </article>
+
+      <article class="page page-right">
+        <div class="page-title-row">
+          <h2>Historias Publicadas</h2>
+          <button id="refreshBtn" type="button">Atualizar</button>
+        </div>
+        <p class="page-note">As historias mais novas aparecem primeiro.</p>
+        <div id="storiesContainer" class="stories"></div>
+      </article>
+    </section>
+  </main>
+
+  <template id="storyTemplate">
+    <article class="story-card">
+      <h3 class="story-title"></h3>
+      <p class="story-meta"></p>
+      <p class="story-preview"></p>
+      <div class="story-actions">
+        <button type="button" class="story-read-btn" data-action="read">Ler historia</button>
+        <button type="button" class="story-edit-btn admin-only" data-action="edit">Editar</button>
+        <button type="button" class="story-delete-btn admin-only" data-action="delete">Excluir</button>
+      </div>
+    </article>
+  </template>
+
+  <dialog id="readerModal" class="reader-modal">
+    <article class="reader-book-page">
+      <button id="closeModalBtn" class="close-modal" type="button" aria-label="Fechar leitura">Fechar</button>
+      <div class="reader-toolbar">
+        <p class="reader-toolbar-label">Leitura em modo livro</p>
+        <div class="font-controls" role="group" aria-label="Controle de tamanho da fonte">
+          <button id="decreaseFontBtn" type="button" class="secondary-btn font-btn">A-</button>
+          <span id="fontSizeLabel" class="font-size-label">100%</span>
+          <button id="increaseFontBtn" type="button" class="secondary-btn font-btn">A+</button>
+        </div>
+      </div>
+
+      <section class="reader-open-book">
+        <aside class="reader-page reader-page-left">
+          <h4>Capitulo</h4>
+          <p id="modalTitle"></p>
+          <p id="modalMeta" class="story-meta"></p>
+        </aside>
+
+        <article class="reader-page reader-page-right">
+          <p id="modalContent" class="modal-content"></p>
+          <div id="modalGallery" class="story-gallery"></div>
+        </article>
+      </section>
+
+      <div class="story-actions modal-actions">
+        <button id="modalEditBtn" type="button" class="story-edit-btn admin-only">Editar</button>
+        <button id="modalDeleteBtn" type="button" class="story-delete-btn admin-only">Excluir</button>
+      </div>
+
+      <form id="editForm" class="edit-form hidden" enctype="multipart/form-data">
+        <h4>Editar historinha</h4>
+        <label for="editTitle">Titulo</label>
+        <input id="editTitle" name="title" type="text" maxlength="100" required>
+
+        <label for="editAuthor">Autor</label>
+        <input id="editAuthor" name="author" type="text" maxlength="60">
+
+        <label for="editContent">Historia</label>
+        <textarea id="editContent" name="content" rows="8" maxlength="5000" required></textarea>
+
+        <label for="editPhotos">Novas fotos (opcional)</label>
+        <input id="editPhotos" name="photos" type="file" accept="image/*" multiple class="file-hidden">
+        <label for="editPhotos" class="photo-picker">
+          <span class="photo-picker-title">Trocar imagens</span>
+          <span id="editPhotosInfo" class="photo-picker-subtitle">Sem novas fotos</span>
+        </label>
+
+        <div class="story-actions">
+          <button id="saveEditBtn" type="submit" class="story-edit-btn">Salvar alteracoes</button>
+          <button id="cancelEditBtn" type="button" class="secondary-btn">Cancelar</button>
+        </div>
+      </form>
+    </article>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
