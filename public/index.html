@@ -6,15 +6,22 @@
   <title>Livro de Historinhas para Dormir</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;700&family=Handlee&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:wght@400;500;700&family=Handlee&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="sky"></div>
+  <div class="sky" aria-hidden="true">
+    <span class="star-layer star-layer-one"></span>
+    <span class="star-layer star-layer-two"></span>
+    <span class="star-layer star-layer-three"></span>
+  </div>
   <main class="book-wrapper">
     <header class="book-cover">
       <p class="cover-subtitle">Biblioteca colaborativa noturna</p>
-      <h1>Livro de Historinhas para Dormir</h1>
+      <h1 class="cosmic-title" aria-label="Livro de Historinhas para Dormir">
+        <span>Livro de Historinhas</span>
+        <span>para Dormir</span>
+      </h1>
       <p>
         Qualquer pessoa pode escrever um conto, adicionar fotos e deixar o sono mais doce para outras familias.
       </p>
