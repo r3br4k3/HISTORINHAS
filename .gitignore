@@ -1,5 +1,6 @@
 node_modules/
 uploads/
+data/stories.json
 .env
 *.log
 npm-debug.log*

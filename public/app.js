@@ -278,6 +278,9 @@ function updateViewer() {
   viewerImage.src = viewerPhotos[viewerIndex].src;
   viewerImage.alt = viewerPhotos[viewerIndex].alt;
   viewerCounter.textContent = `${viewerIndex + 1} / ${viewerPhotos.length}`;
+  const shouldDisableNav = viewerPhotos.length <= 1;
+  prevImageBtn.disabled = shouldDisableNav;
+  nextImageBtn.disabled = shouldDisableNav;
 }
 
 function openImageViewer(photos, initialIndex, storyTitle) {
@@ -301,6 +304,23 @@ function changeViewerImage(direction) {
 function closeImageViewer() {
   if (imageViewer.open) {
     imageViewer.close();
+  }
+}
+
+function onGlobalKeydown(event) {
+  if (!imageViewer.open) {
+    return;
+  }
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    changeViewerImage(-1);
+    return;
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    changeViewerImage(1);
   }
 }
 
@@ -505,6 +525,7 @@ imageViewer.addEventListener('click', (event) => {
     closeImageViewer();
   }
 });
+window.addEventListener('keydown', onGlobalKeydown);
 
 refreshBtn.addEventListener('click', () => {
   loadStories();
