@@ -8,6 +8,7 @@ const photosInfo = document.getElementById('photosInfo');
 const themeToggle = document.getElementById('themeToggle');
 const adminAccessBtn = document.getElementById('adminAccessBtn');
 const installAppBtn = document.getElementById('installAppBtn');
+const typingSoundToggleBtn = document.getElementById('typingSoundToggleBtn');
 
 const readerModal = document.getElementById('readerModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
@@ -48,6 +49,150 @@ const FONT_STEP = 0.1;
 let viewerPhotos = [];
 let viewerIndex = 0;
 let deferredInstallPrompt = null;
+let typewriterAudioContext = null;
+let lastTypewriterSoundAt = 0;
+let isTypingSoundEnabled = true;
+
+const TYPING_SOUND_MIN_INTERVAL_MS = 38;
+
+function updateTypingSoundButtonLabel() {
+  if (!typingSoundToggleBtn) {
+    return;
+  }
+
+  typingSoundToggleBtn.textContent = isTypingSoundEnabled
+    ? 'Som digitacao: ligado'
+    : 'Som digitacao: desligado';
+}
+
+function setTypingSoundEnabled(enabled) {
+  isTypingSoundEnabled = Boolean(enabled);
+  localStorage.setItem('typing-sound-enabled', isTypingSoundEnabled ? '1' : '0');
+  updateTypingSoundButtonLabel();
+}
+
+function initTypingSoundPreference() {
+  const saved = localStorage.getItem('typing-sound-enabled');
+  isTypingSoundEnabled = saved !== '0';
+  updateTypingSoundButtonLabel();
+}
+
+function initTypewriterAudio() {
+  if (typewriterAudioContext) {
+    return typewriterAudioContext;
+  }
+
+  const ContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!ContextClass) {
+    return null;
+  }
+
+  typewriterAudioContext = new ContextClass();
+  return typewriterAudioContext;
+}
+
+async function ensureTypewriterAudioUnlocked() {
+  const context = initTypewriterAudio();
+  if (!context) {
+    return;
+  }
+
+  if (context.state === 'suspended') {
+    try {
+      await context.resume();
+    } catch (_error) {
+      // Ignora falha de audio para nao impactar digitacao.
+    }
+  }
+}
+
+function isTypingFieldTarget(target) {
+  if (!target || !(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  if (target.isContentEditable) {
+    return true;
+  }
+
+  if (target instanceof HTMLTextAreaElement) {
+    return !target.disabled && !target.readOnly;
+  }
+
+  if (target instanceof HTMLInputElement) {
+    if (target.disabled || target.readOnly) {
+      return false;
+    }
+
+    const allowedTypes = ['text', 'search', 'url', 'email', 'tel', 'password'];
+    return allowedTypes.includes((target.type || '').toLowerCase());
+  }
+
+  return false;
+}
+
+function playTypewriterSound(key) {
+  if (!isTypingSoundEnabled) {
+    return;
+  }
+
+  const now = performance.now();
+  if (now - lastTypewriterSoundAt < TYPING_SOUND_MIN_INTERVAL_MS) {
+    return;
+  }
+  lastTypewriterSoundAt = now;
+
+  const context = initTypewriterAudio();
+  if (!context || context.state !== 'running') {
+    return;
+  }
+
+  const startAt = context.currentTime;
+  const isEnter = key === 'Enter';
+  const isBackspace = key === 'Backspace';
+
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const clickFilter = context.createBiquadFilter();
+
+  oscillator.type = 'square';
+  oscillator.frequency.value = isEnter ? 820 : isBackspace ? 170 : 230 + Math.random() * 70;
+
+  clickFilter.type = 'bandpass';
+  clickFilter.frequency.value = isEnter ? 1600 : 1350;
+  clickFilter.Q.value = 0.9;
+
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(isEnter ? 0.05 : 0.038, startAt + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + (isEnter ? 0.085 : 0.055));
+
+  oscillator.connect(clickFilter);
+  clickFilter.connect(gain);
+  gain.connect(context.destination);
+
+  oscillator.start(startAt);
+  oscillator.stop(startAt + (isEnter ? 0.09 : 0.06));
+}
+
+function handleTypewriterKeydown(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
+  if (!isTypingFieldTarget(event.target)) {
+    return;
+  }
+
+  const key = event.key;
+  const isCharacter = key.length === 1;
+  const allowedActionKeys = ['Backspace', 'Enter', 'Delete', 'Spacebar', ' '];
+
+  if (!isCharacter && !allowedActionKeys.includes(key)) {
+    return;
+  }
+
+  playTypewriterSound(key);
+}
 
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
@@ -594,9 +739,18 @@ decreaseFontBtn.addEventListener('click', () => {
 increaseFontBtn.addEventListener('click', () => {
   changeReaderFont(FONT_STEP);
 });
+if (typingSoundToggleBtn) {
+  typingSoundToggleBtn.addEventListener('click', () => {
+    setTypingSoundEnabled(!isTypingSoundEnabled);
+  });
+}
 
 registerServiceWorker();
 setupPwaInstallPrompt();
+window.addEventListener('pointerdown', ensureTypewriterAudioUnlocked, { once: true });
+window.addEventListener('keydown', ensureTypewriterAudioUnlocked, { once: true });
+window.addEventListener('keydown', handleTypewriterKeydown, { capture: true });
+initTypingSoundPreference();
 initTheme();
 initReaderFontScale();
 updateAdminButtonLabel();
