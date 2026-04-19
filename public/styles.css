@@ -498,6 +498,7 @@ body.dark-mode .story-card {
   border-radius: 18px;
   padding: 0;
   background: transparent;
+  overflow: hidden;
 }
 
 .reader-modal::backdrop {
@@ -511,7 +512,12 @@ body.dark-mode .story-card {
   border: 1px solid #d2b58a;
   padding: 18px;
   max-height: 84vh;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body.reader-modal-open {
+  overflow: hidden;
 }
 
 .reader-toolbar {

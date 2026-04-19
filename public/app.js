@@ -532,6 +532,7 @@ function openReader(storyId) {
   editForm.classList.add('hidden');
   fillModal(story);
   updateModalAdminVisibility();
+  document.body.classList.add('reader-modal-open');
   readerModal.showModal();
 }
 
@@ -539,6 +540,7 @@ function closeReader() {
   if (readerModal.open) {
     readerModal.close();
   }
+  document.body.classList.remove('reader-modal-open');
   selectedStoryId = null;
   editForm.classList.add('hidden');
   editPhotos.value = '';
@@ -561,6 +563,7 @@ function openEditForm(storyId) {
 
   if (!readerModal.open) {
     updateModalAdminVisibility();
+    document.body.classList.add('reader-modal-open');
     readerModal.showModal();
   }
 }
