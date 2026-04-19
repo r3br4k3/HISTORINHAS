@@ -4,30 +4,54 @@ const path = require('path');
 const fs = require('fs/promises');
 const fssync = require('fs');
 const crypto = require('crypto');
+const os = require('os');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 const ADMIN_PASSWORD = 'admin';
 
 const ROOT_DIR = __dirname;
-const DATA_DIR = path.join(ROOT_DIR, 'data');
-const UPLOAD_DIR = path.join(ROOT_DIR, 'uploads');
+const fallbackBaseDir = path.join(os.tmpdir(), 'livro-de-historias');
+const storageBaseDir = process.env.STORAGE_DIR || ROOT_DIR;
+const DATA_DIR = path.join(storageBaseDir, 'data');
+const UPLOAD_DIR = path.join(storageBaseDir, 'uploads');
 const STORIES_FILE = path.join(DATA_DIR, 'stories.json');
 
-if (!fssync.existsSync(DATA_DIR)) {
-  fssync.mkdirSync(DATA_DIR, { recursive: true });
+function ensureStorage(baseDir) {
+  const dataDir = path.join(baseDir, 'data');
+  const uploadDir = path.join(baseDir, 'uploads');
+  const storiesFile = path.join(dataDir, 'stories.json');
+
+  if (!fssync.existsSync(dataDir)) {
+    fssync.mkdirSync(dataDir, { recursive: true });
+  }
+
+  if (!fssync.existsSync(uploadDir)) {
+    fssync.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  if (!fssync.existsSync(storiesFile)) {
+    fssync.writeFileSync(storiesFile, '[]\n');
+  }
+
+  return { dataDir, uploadDir, storiesFile };
 }
 
-if (!fssync.existsSync(UPLOAD_DIR)) {
-  fssync.mkdirSync(UPLOAD_DIR, { recursive: true });
+let activeStorage = { dataDir: DATA_DIR, uploadDir: UPLOAD_DIR, storiesFile: STORIES_FILE };
+try {
+  activeStorage = ensureStorage(storageBaseDir);
+} catch (_err) {
+  // Em hosts gerenciados com pasta de app read-only, usa temp dir.
+  activeStorage = ensureStorage(fallbackBaseDir);
 }
 
-if (!fssync.existsSync(STORIES_FILE)) {
-  fssync.writeFileSync(STORIES_FILE, '[]\n');
-}
+const ACTIVE_DATA_DIR = activeStorage.dataDir;
+const ACTIVE_UPLOAD_DIR = activeStorage.uploadDir;
+const ACTIVE_STORIES_FILE = activeStorage.storiesFile;
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+  destination: (_req, _file, cb) => cb(null, ACTIVE_UPLOAD_DIR),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const baseName = path.basename(file.originalname, ext)
@@ -54,12 +78,12 @@ const upload = multer({
 });
 
 app.use(express.json({ limit: '2mb' }));
-app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/uploads', express.static(ACTIVE_UPLOAD_DIR));
 app.use(express.static(path.join(ROOT_DIR, 'public')));
 
 async function readStories() {
   try {
-    const content = await fs.readFile(STORIES_FILE, 'utf8');
+    const content = await fs.readFile(ACTIVE_STORIES_FILE, 'utf8');
     const parsed = JSON.parse(content);
     return Array.isArray(parsed) ? parsed : [];
   } catch (_err) {
@@ -68,7 +92,7 @@ async function readStories() {
 }
 
 async function writeStories(stories) {
-  await fs.writeFile(STORIES_FILE, JSON.stringify(stories, null, 2), 'utf8');
+  await fs.writeFile(ACTIVE_STORIES_FILE, JSON.stringify(stories, null, 2), 'utf8');
 }
 
 function extractAdminPassword(req) {
@@ -118,7 +142,7 @@ async function deletePhotoFiles(photos = []) {
     if (!fileName) {
       return;
     }
-    const absolutePath = path.join(UPLOAD_DIR, fileName);
+    const absolutePath = path.join(ACTIVE_UPLOAD_DIR, fileName);
     try {
       await fs.unlink(absolutePath);
     } catch (_err) {
@@ -128,6 +152,15 @@ async function deletePhotoFiles(photos = []) {
 
   await Promise.all(removals);
 }
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    runtime: 'node',
+    storageDir: path.dirname(ACTIVE_DATA_DIR),
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.get('/api/stories', async (_req, res) => {
   const stories = await readStories();
@@ -278,6 +311,7 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(ROOT_DIR, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Livro de Historias no ar: http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Livro de Historias no ar: http://${HOST}:${PORT}`);
+  console.log(`Storage ativo: ${path.dirname(ACTIVE_DATA_DIR)}`);
 });
