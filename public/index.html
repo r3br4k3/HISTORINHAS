@@ -40,7 +40,11 @@
 
     <section class="book-spread" aria-label="Criar nova historinha">
       <article class="page page-left">
-        <h2>Nova Historia</h2>
+        <div class="page-title-row page-title-row-left">
+          <h2>Nova Historia</h2>
+          <button id="toggleCreateBtn" type="button" class="plus-create-btn" aria-expanded="false" aria-controls="createPanel" title="Abrir criacao de historinha">+</button>
+        </div>
+        <div id="createPanel" class="create-panel hidden">
         <form id="storyForm" enctype="multipart/form-data">
           <label for="title">Titulo</label>
           <input id="title" name="title" type="text" maxlength="100" placeholder="Ex.: A Estrela Que Nao Piscava" required>
@@ -61,14 +65,25 @@
           <button type="submit">Publicar nas paginas do livro</button>
         </form>
         <p id="formMessage" role="status" aria-live="polite"></p>
+        </div>
       </article>
 
       <article class="page page-right">
         <div class="page-title-row">
           <h2>Historias Publicadas</h2>
-          <button id="refreshBtn" type="button">Atualizar</button>
+          <div class="title-actions">
+            <button id="randomStoryBtn" type="button">Aleatoria</button>
+            <button id="refreshBtn" type="button">Atualizar</button>
+          </div>
         </div>
         <p class="page-note">As historias mais novas aparecem primeiro.</p>
+        <section class="story-search-panel" aria-label="Pesquisa de historinhas">
+          <label for="searchInput">Pesquisar historinhas</label>
+          <div class="search-row">
+            <input id="searchInput" type="search" placeholder="Buscar por titulo, autor ou trecho..." autocomplete="off">
+            <button id="clearSearchBtn" type="button" class="secondary-btn">Limpar</button>
+          </div>
+        </section>
         <div id="storiesContainer" class="stories"></div>
       </article>
     </section>

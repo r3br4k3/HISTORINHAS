@@ -2,6 +2,11 @@ const storyForm = document.getElementById('storyForm');
 const storiesContainer = document.getElementById('storiesContainer');
 const formMessage = document.getElementById('formMessage');
 const refreshBtn = document.getElementById('refreshBtn');
+const randomStoryBtn = document.getElementById('randomStoryBtn');
+const searchInput = document.getElementById('searchInput');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+const toggleCreateBtn = document.getElementById('toggleCreateBtn');
+const createPanel = document.getElementById('createPanel');
 const storyTemplate = document.getElementById('storyTemplate');
 const photosInput = document.getElementById('photos');
 const photosInfo = document.getElementById('photosInfo');
@@ -52,6 +57,7 @@ let deferredInstallPrompt = null;
 let typewriterAudioContext = null;
 let lastTypewriterSoundAt = 0;
 let isTypingSoundEnabled = true;
+let searchQuery = '';
 
 const TYPING_SOUND_MIN_INTERVAL_MS = 38;
 
@@ -358,6 +364,27 @@ function createPreview(content) {
   return `${content.slice(0, 95)}...`;
 }
 
+function normalizeForSearch(text) {
+  return (text || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function getVisibleStories() {
+  const query = normalizeForSearch(searchQuery);
+  if (!query) {
+    return storiesState;
+  }
+
+  return storiesState.filter((story) => {
+    const haystack = normalizeForSearch(`${story.title} ${story.author} ${story.content}`);
+    return haystack.includes(query);
+  });
+}
+
 function buildStoryCard(story) {
   const clone = storyTemplate.content.cloneNode(true);
   const cardEl = clone.querySelector('.story-card');
@@ -380,15 +407,43 @@ function buildStoryCard(story) {
 
 function renderStories() {
   storiesContainer.innerHTML = '';
+  const visibleStories = getVisibleStories();
 
   if (!storiesState.length) {
     storiesContainer.innerHTML = '<p>Nenhuma historinha ainda. Seja a primeira pessoa a publicar.</p>';
     return;
   }
 
-  storiesState.forEach((story) => {
+  if (!visibleStories.length) {
+    storiesContainer.innerHTML = '<p>Nenhuma historinha encontrada para esta pesquisa.</p>';
+    return;
+  }
+
+  visibleStories.forEach((story) => {
     storiesContainer.appendChild(buildStoryCard(story));
   });
+}
+
+function setCreatePanelVisible(visible) {
+  if (!createPanel || !toggleCreateBtn) {
+    return;
+  }
+
+  const shouldShow = Boolean(visible);
+  createPanel.classList.toggle('hidden', !shouldShow);
+  toggleCreateBtn.setAttribute('aria-expanded', shouldShow ? 'true' : 'false');
+  toggleCreateBtn.textContent = shouldShow ? '-' : '+';
+  toggleCreateBtn.title = shouldShow
+    ? 'Fechar criacao de historinha'
+    : 'Abrir criacao de historinha';
+}
+
+function pickRandomStory(list) {
+  if (!Array.isArray(list) || !list.length) {
+    return null;
+  }
+  const index = Math.floor(Math.random() * list.length);
+  return list[index];
 }
 
 async function loadStories() {
@@ -726,6 +781,45 @@ refreshBtn.addEventListener('click', () => {
   loadStories();
 });
 
+if (randomStoryBtn) {
+  randomStoryBtn.addEventListener('click', () => {
+    const pool = getVisibleStories();
+    const randomStory = pickRandomStory(pool);
+
+    if (!randomStory) {
+      setMessage('Nao ha historinhas disponiveis para abrir de forma aleatoria.', 'error');
+      return;
+    }
+
+    openReader(randomStory.id);
+  });
+}
+
+if (searchInput) {
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value || '';
+    renderStories();
+  });
+}
+
+if (clearSearchBtn) {
+  clearSearchBtn.addEventListener('click', () => {
+    searchQuery = '';
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    renderStories();
+  });
+}
+
+if (toggleCreateBtn) {
+  toggleCreateBtn.addEventListener('click', () => {
+    const isHidden = createPanel?.classList.contains('hidden');
+    setCreatePanelVisible(isHidden);
+  });
+}
+
 photosInput.addEventListener('change', () => {
   setFileInfo(photosInput, photosInfo, 'Nenhuma foto selecionada');
 });
@@ -756,5 +850,6 @@ window.addEventListener('keydown', handleTypewriterKeydown, { capture: true });
 initTypingSoundPreference();
 initTheme();
 initReaderFontScale();
+setCreatePanelVisible(false);
 updateAdminButtonLabel();
 loadStories();
